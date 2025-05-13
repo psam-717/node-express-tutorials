@@ -67,7 +67,7 @@ export const getAllUsers = async(req, res) => {
     }
 }
 
-
+//req object we have three: body, params, query
 export const getSingleUser = async(req, res) => {
     try {
         const {id} = req.params;
@@ -119,7 +119,7 @@ export const getUserByJobDescription = async (req, res) => {
             })
         }
 
-        //getting user
+        //retrieve users by their job description
         const user = await User.find({jobDescription});
 
         if(!user || user.length === 0){
