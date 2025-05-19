@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import User from "../../models/users.models.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken"
 
 
 export const signUp = async( req, res) => {
@@ -41,6 +42,54 @@ export const signUp = async( req, res) => {
     } catch (error) {
         console.log('Error caused by: ', error,);
         return res.status(500).json({success: false, message: 'Internal server error occurred while signing up'});
+    }
+}
+
+export const login = async (req, res) => {
+    try {
+        const {email, password} = req.body;
+
+        const existingUser = await User.findOne({email});
+
+        if(!existingUser){
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            })
+        }
+
+        const isMatch = await bcrypt.compare(password, existingUser.password);
+
+        if(!isMatch){
+            return res.status(401).json({
+                success: false,
+                message: 'Password is incorrect'
+            })
+        }
+
+        const token = jwt.sign({id: existingUser._id}, process.env.SECRET_KEY, {expiresIn: '1d'});
+
+        res.cookie('jwtToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000,
+            sameSite: 'strict'
+        })
+
+
+        const{password: _, ...userData} = existingUser._doc;
+
+        res.status(200).json({
+            success: true,
+            data: userData
+        })
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error while logging in'
+        })
     }
 }
 
