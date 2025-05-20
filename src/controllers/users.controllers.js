@@ -212,70 +212,68 @@ export const deleteUserByEmail = async(req, res) => {
 }
 
 export const updateUserData = async (req, res) => {
-   const {updateData} = req.body;
-   const {id} = req.params;
-   try {
+    const {updateData} = req.body;
+    const {id} = req.params;
+    try {
+        //validate the id 
         if(!mongoose.Types.ObjectId.isValid(id)){
-            return res.status(400).json({
-                message: 'Invalid id specified'
-            })
+            return res.status(400).json({message: 'Invalid Id specified'})
         }
 
-        const existingUser = await User.findById(id)
+        // retrieve user based on the id
+        const existingUser = await User.findById(id);
         if(!existingUser){
-            return res.status(404).json({
-                message: 'User does not exist'
-            })
+            return res.status(404).json({ message: 'User not found'})
         }
 
+        //make sure a valid updateData is provided in the req body
         if(!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0){
             return res.status(400).json({
-                message: 'the data to be updated should be a non empty object'
+                message: 'Data to be updated must be a non empty object'
             })
         }
-    
-        // user should be able to update firstName, lastName, jobDescription
-        const allowedFields = ['firstName', 'lastName', 'jobDescription'];
+        //fields that can be updated should only be firstName, lastName, and jobDescription
+        const allowedFields = ["firstName", "lastName", "jobDescription"];
         const providedFields = Object.keys(updateData);
-        const disallowedFields = providedFields.filter(field => !allowedFields.includes(field));
+        const disallowedFields = providedFields.filter(field => !allowedFields.includes(field)) 
 
         if(disallowedFields.length > 0){
-            return res.status(400).json({
-                message: 'Fields that can be updated are firstName, lastName and jobDescription'
-            })
+            return res.status(400).json({message: 'Only the fields firstName, lastName or jobDescription can be updated'})
         }
 
-        if (updateData.jobDescription && !['frontend', 'backend', 'none'].includes(updateData.jobDescription)){
-            return res.status(400).json({
-                message: 'Job description can only take the strings, frontend, backend or none'
-            })
+        //making sure the jobDescription field only takes frontend,backend or none
+        const jobDescriptionValues = ['frontend', 'backend', 'none'];
+        if (updateData.jobDescription && !jobDescriptionValues.includes(updateData.jobDescription)){
+            return res.status(400).json({message: 'Only the fields frontend, backend or none can be be provided in the jobDescription field'})
         }
 
+        //update the fields by the user id
         const updatedUser = await User.findByIdAndUpdate(
             id,
             {$set: updateData},
             {new: true, runValidators: true, select: 'firstName, lastName, jobDescription'}
-        );
+        )
 
         if(!updatedUser){
-            return res.status(403).json({
-                message: 'User could not be updated'
-            })
+            return res.status(400).json({message: 'User data was unable to update'})
         }
 
         return res.status(200).json({
-            message: 'User data updated successfully',
-            data : {
+            message: 'updated successfully',
+            data: {
                 firstName: updateData.firstName,
                 lastName: updateData.lastName,
                 jobDescription: updateData.jobDescription
+
             }
         })
 
-   } catch (error) {
-        console.log('Error caused by ', error);
-   }
+        
+    } catch (error) {
+        console.log("Error caused by ", error);
+    }
 }
+
 
 //req.query
 export const getUserByJobDescription = async (req, res) => {

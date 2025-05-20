@@ -1,5 +1,5 @@
 import express from "express"
-import { createDummyUser, deleteUserByEmail, deleteUserById, displayHomeMessage, getAllUsers, getSingleUser, getUserByJobDescription, login, signUp, updateUserData } from "../controllers/users.controllers.js";
+import { createDummyUser, deleteUserByEmail, deleteUserById, displayHomeMessage, getAllUsers, getSingleUser, getUserByJobDescription, login, signUp, updateUserData} from "../controllers/users.controllers.js";
 import { signUpValidation } from "../../validators/signup.validation.js";
 import { validate } from "../../validators/validate.js";
 
