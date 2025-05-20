@@ -155,6 +155,127 @@ export const getSingleUser = async(req, res) => {
 
 }
 
+export const deleteUserById = async(req, res) => {
+    const {id} = req.params;
+    try {
+        if(!id){
+            return res.status(404).json({
+                message: 'Id not specified'
+            })
+        }
+
+        const userToDelete = await User.findByIdAndDelete(id);
+
+        if(!userToDelete){
+            return res.status(404).json({
+                message: 'User not available'
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'User deleted successfully'
+        })
+
+    } catch (error) {
+       console.log('Error caused by ', error); 
+    }
+}
+
+
+export const deleteUserByEmail = async(req, res) => {
+    const {email} = req.body;
+    try {
+        // can be handled using the express validator
+        if (!email){
+            return res.status(404).json({
+                message: 'Email not available'
+            })
+        }
+
+        const deletedUser = await User.findOneAndDelete({email});
+
+        if(!deletedUser){
+            return res.status(404).json({
+                message: 'User cannot be found'
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'User deleted successfully'
+        })
+
+    } catch (error) {
+        console.log("Error caused by ", error);
+    }
+}
+
+export const updateUserData = async (req, res) => {
+   const {updateData} = req.body;
+   const {id} = req.params;
+   try {
+        if(!mongoose.Types.ObjectId.isValid(id)){
+            return res.status(400).json({
+                message: 'Invalid id specified'
+            })
+        }
+
+        const existingUser = await User.findById(id)
+        if(!existingUser){
+            return res.status(404).json({
+                message: 'User does not exist'
+            })
+        }
+
+        if(!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0){
+            return res.status(400).json({
+                message: 'the data to be updated should be a non empty object'
+            })
+        }
+    
+        // user should be able to update firstName, lastName, jobDescription
+        const allowedFields = ['firstName', 'lastName', 'jobDescription'];
+        const providedFields = Object.keys(updateData);
+        const disallowedFields = providedFields.filter(field => !allowedFields.includes(field));
+
+        if(disallowedFields.length > 0){
+            return res.status(400).json({
+                message: 'Fields that can be updated are firstName, lastName and jobDescription'
+            })
+        }
+
+        if (updateData.jobDescription && !['frontend', 'backend', 'none'].includes(updateData.jobDescription)){
+            return res.status(400).json({
+                message: 'Job description can only take the strings, frontend, backend or none'
+            })
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            {$set: updateData},
+            {new: true, runValidators: true, select: 'firstName, lastName, jobDescription'}
+        );
+
+        if(!updatedUser){
+            return res.status(403).json({
+                message: 'User could not be updated'
+            })
+        }
+
+        return res.status(200).json({
+            message: 'User data updated successfully',
+            data : {
+                firstName: updateData.firstName,
+                lastName: updateData.lastName,
+                jobDescription: updateData.jobDescription
+            }
+        })
+
+   } catch (error) {
+        console.log('Error caused by ', error);
+   }
+}
 
 //req.query
 export const getUserByJobDescription = async (req, res) => {
